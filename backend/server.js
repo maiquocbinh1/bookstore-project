@@ -38,7 +38,7 @@ app.use(cookieParser());
 app.use('/api/', apiLimiter);
 
 // Static files - uploads
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // =====================================================
 // ROUTES
@@ -46,8 +46,8 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ 
-    success: true, 
+  res.json({
+    success: true,
     message: 'Server is running',
     timestamp: new Date().toISOString()
   });
@@ -88,7 +88,7 @@ const startServer = async () => {
   try {
     // Test database connection
     const dbConnected = await testConnection();
-    
+
     if (!dbConnected) {
       console.error('❌ Không thể kết nối database. Kiểm tra cấu hình trong file .env');
       console.log('\n📝 Hướng dẫn:');

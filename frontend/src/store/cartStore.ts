@@ -1,6 +1,8 @@
-import create from 'zustand';
+import { create } from 'zustand';
+import api from '../lib/api';
+import toast from 'react-hot-toast';
 
-interface CartItem {
+export interface CartItem {
   cart_id: number;
   book_id: number;
   title: string;
@@ -13,55 +15,87 @@ interface CartItem {
 
 interface CartState {
   items: CartItem[];
-  total: number;
-  setCart: (items: CartItem[]) => void;
-  addItem: (item: CartItem) => void;
-  updateQuantity: (cart_id: number, quantity: number) => void;
-  removeItem: (cart_id: number) => void;
-  clearCart: () => void;
-  calculateTotal: () => void;
+  loading: boolean;
+  fetchCart: () => Promise<void>;
+  addItem: (bookId: number, quantity?: number) => Promise<void>;
+  updateQuantity: (cartId: number, quantity: number) => Promise<void>;
+  removeItem: (cartId: number) => Promise<void>;
+  clearCart: () => Promise<void>;
+  getCartTotal: () => number;
+  getCartCount: () => number;
 }
 
 export const useCartStore = create<CartState>((set, get) => ({
   items: [],
-  total: 0,
+  loading: false,
 
-  setCart: (items) => {
-    set({ items });
-    get().calculateTotal();
+  fetchCart: async () => {
+    set({ loading: true });
+    try {
+      const response = await api.get('/cart');
+      const items = response.data.data.items || [];
+      set({ items, loading: false });
+    } catch (error) {
+      console.error('Error fetching cart:', error);
+      set({ items: [], loading: false });
+    }
   },
 
-  addItem: (item) => {
-    set((state) => ({
-      items: [...state.items, item],
-    }));
-    get().calculateTotal();
+  addItem: async (bookId: number, quantity = 1) => {
+    try {
+      await api.post('/cart', { book_id: bookId, quantity });
+      await get().fetchCart();
+      toast.success('Đã thêm vào giỏ hàng');
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'Không thể thêm vào giỏ hàng';
+      toast.error(message);
+    }
   },
 
-  updateQuantity: (cart_id, quantity) => {
-    set((state) => ({
-      items: state.items.map((item) =>
-        item.cart_id === cart_id ? { ...item, quantity } : item
+  updateQuantity: async (cartId: number, quantity: number) => {
+    if (quantity < 1) return;
+
+    const oldItems = get().items;
+    set({
+      items: oldItems.map((item) =>
+        item.cart_id === cartId ? { ...item, quantity } : item
       ),
-    }));
-    get().calculateTotal();
+    });
+
+    try {
+      await api.put(`/cart/${cartId}`, { quantity });
+    } catch (error: any) {
+      set({ items: oldItems });
+      toast.error(error.response?.data?.message || 'Lỗi cập nhật số lượng');
+    }
   },
 
-  removeItem: (cart_id) => {
-    set((state) => ({
-      items: state.items.filter((item) => item.cart_id !== cart_id),
-    }));
-    get().calculateTotal();
+  removeItem: async (cartId: number) => {
+    try {
+      await api.delete(`/cart/${cartId}`);
+      set((state) => ({
+        items: state.items.filter((item) => item.cart_id !== cartId),
+      }));
+      toast.success('Đã xóa sản phẩm');
+    } catch (error: any) {
+      toast.error('Không thể xóa sản phẩm');
+    }
   },
 
-  clearCart: () => {
-    set({ items: [], total: 0 });
+  clearCart: async () => {
+    try {
+      await api.delete('/cart');
+      set({ items: [] });
+    } catch (error) {
+      console.error('Error clearing cart:', error);
+    }
   },
 
-  calculateTotal: () => {
-    const items = get().items;
-    const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    set({ total });
+  getCartTotal: () => {
+    return get().items.reduce((total, item) => total + item.price * item.quantity, 0);
+  },
+
+  getCartCount: () => {
+    return get().items.reduce((count, item) => count + item.quantity, 0);
   },
 }));
-
