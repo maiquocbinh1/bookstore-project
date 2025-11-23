@@ -8,6 +8,7 @@ router.use(protect, isAdmin);
 
 router.get('/dashboard', adminReportController.getDashboardStats);
 router.get('/quarter', adminReportController.getCurrentQuarterReport);
+router.get('/revenue', adminReportController.getRevenueReport);
 router.get('/bestselling', adminReportController.getBestsellingBooks);
 router.get('/new-customers', adminReportController.getNewCustomers);
 router.get('/export/excel', adminReportController.exportReportExcel);

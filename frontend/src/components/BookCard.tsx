@@ -35,6 +35,8 @@ const BookCard: React.FC<BookCardProps> = ({ book }) => {
         }).format(price);
     };
 
+    const [imageError, setImageError] = React.useState(false);
+    
     const imageUrl = book.image_url
         ? (book.image_url.startsWith('http') ? book.image_url : `http://localhost:5000${book.image_url}`)
         : '';
@@ -42,15 +44,18 @@ const BookCard: React.FC<BookCardProps> = ({ book }) => {
     return (
         <Link to={`/books/${bookId}`} className="group flex flex-col h-full bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-200 overflow-hidden">
             <div className="relative pt-[140%] bg-gray-100 overflow-hidden">
-                {imageUrl ? (
+                {imageUrl && !imageError ? (
                     <img
                         src={imageUrl}
                         alt={book.title}
                         className="absolute top-0 left-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={() => setImageError(true)}
+                        loading="lazy"
                     />
                 ) : (
-                    <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-4xl text-gray-300">
-                        📚
+                    <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 text-gray-400">
+                        <span className="text-4xl mb-2">📚</span>
+                        <span className="text-xs text-center px-2">{book.title.substring(0, 20)}...</span>
                     </div>
                 )}
                 {book.stock_quantity === 0 && (

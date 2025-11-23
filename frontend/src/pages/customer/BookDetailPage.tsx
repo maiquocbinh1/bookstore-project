@@ -17,6 +17,7 @@ const BookDetailPage: React.FC = () => {
     const [book, setBook] = useState<Book | null>(null);
     const [loading, setLoading] = useState(true);
     const [quantity, setQuantity] = useState(1);
+    const [imageError, setImageError] = useState(false);
 
     const [rating, setRating] = useState(5);
     const [comment, setComment] = useState('');
@@ -94,7 +95,7 @@ const BookDetailPage: React.FC = () => {
 
     if (loading) return <Loading />;
     if (!book) return <div className="text-center py-10">Không tìm thấy sách</div>;
-
+    
     const imageUrl = book.image_url
         ? (book.image_url.startsWith('http') ? book.image_url : `http://localhost:5000${book.image_url}`)
         : '';
@@ -104,15 +105,18 @@ const BookDetailPage: React.FC = () => {
             <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
                 <div className="md:flex">
                     <div className="md:w-1/3 lg:w-1/4 bg-gray-50 p-8 flex items-center justify-center">
-                        {imageUrl ? (
+                        {imageUrl && !imageError ? (
                             <img
                                 src={imageUrl}
                                 alt={book.title}
                                 className="w-full h-auto max-h-[500px] object-contain shadow-lg rounded-md"
+                                onError={() => setImageError(true)}
+                                loading="lazy"
                             />
                         ) : (
-                            <div className="w-full h-64 flex items-center justify-center bg-gray-200 rounded-md text-4xl">
-                                📚
+                            <div className="w-full h-64 flex flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 rounded-md">
+                                <span className="text-6xl mb-2">📚</span>
+                                <span className="text-sm text-gray-500 text-center px-4">{book.title}</span>
                             </div>
                         )}
                     </div>

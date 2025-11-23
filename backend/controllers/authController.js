@@ -66,7 +66,7 @@ exports.register = async (req, res) => {
   }
 };
 
-// KH-02: Đăng nhập với cơ chế khóa tài khoản
+// KH-02: Đăng nhập (đã bỏ chức năng khóa tài khoản)
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -86,24 +86,6 @@ exports.login = async (req, res) => {
 
     const user = users[0];
 
-    // Kiểm tra tài khoản bị khóa
-    if (user.is_locked) {
-      // Kiểm tra thời gian khóa
-      if (user.locked_until && new Date(user.locked_until) > new Date()) {
-        const minutesLeft = Math.ceil((new Date(user.locked_until) - new Date()) / 60000);
-        return res.status(403).json({
-          success: false,
-          message: `Tài khoản đã bị khóa tạm thời. Vui lòng thử lại sau ${minutesLeft} phút.`
-        });
-      } else {
-        // Mở khóa tự động nếu đã hết thời gian
-        await pool.query(
-          'UPDATE users SET is_locked = FALSE, locked_until = NULL, failed_login_attempts = 0 WHERE user_id = ?',
-          [user.user_id]
-        );
-      }
-    }
-
     // Kiểm tra tài khoản không active
     if (!user.is_active) {
       return res.status(403).json({
@@ -116,43 +98,11 @@ exports.login = async (req, res) => {
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
 
     if (!isPasswordValid) {
-      // Tăng số lần đăng nhập thất bại
-      const newAttempts = user.failed_login_attempts + 1;
-      const maxAttempts = parseInt(process.env.MAX_LOGIN_ATTEMPTS) || 3;
-
-      if (newAttempts >= maxAttempts) {
-        // Khóa tài khoản
-        const lockTime = parseInt(process.env.LOCK_TIME) || 15; // phút
-        const lockedUntil = new Date(Date.now() + lockTime * 60000);
-
-        await pool.query(
-          'UPDATE users SET failed_login_attempts = ?, is_locked = TRUE, locked_until = ? WHERE user_id = ?',
-          [newAttempts, lockedUntil, user.user_id]
-        );
-
-        return res.status(403).json({
-          success: false,
-          message: `Đăng nhập thất bại ${maxAttempts} lần. Tài khoản đã bị khóa trong ${lockTime} phút.`
-        });
-      } else {
-        // Cập nhật số lần thất bại
-        await pool.query(
-          'UPDATE users SET failed_login_attempts = ? WHERE user_id = ?',
-          [newAttempts, user.user_id]
-        );
-
-        return res.status(401).json({
-          success: false,
-          message: `Email hoặc mật khẩu không đúng. Còn ${maxAttempts - newAttempts} lần thử.`
-        });
-      }
+      return res.status(401).json({
+        success: false,
+        message: 'Email hoặc mật khẩu không đúng'
+      });
     }
-
-    // Đăng nhập thành công - Reset failed attempts
-    await pool.query(
-      'UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE user_id = ?',
-      [user.user_id]
-    );
 
     // Tạo token
     const token = signToken(user.user_id);

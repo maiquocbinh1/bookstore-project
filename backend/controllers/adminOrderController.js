@@ -234,6 +234,76 @@ exports.updateOrderStatus = async (req, res) => {
   }
 };
 
+// Cập nhật trạng thái thanh toán (cho đơn COD)
+exports.updatePaymentStatus = async (req, res) => {
+  const connection = await pool.getConnection();
+  
+  try {
+    await connection.beginTransaction();
+
+    const { id } = req.params;
+    const { payment_status } = req.body;
+
+    // Kiểm tra payment_status hợp lệ
+    const validStatuses = ['unpaid', 'paid', 'failed', 'refunded'];
+    if (!validStatuses.includes(payment_status)) {
+      await connection.rollback();
+      return res.status(400).json({
+        success: false,
+        message: 'Trạng thái thanh toán không hợp lệ'
+      });
+    }
+
+    // Lấy thông tin đơn hàng
+    const [orders] = await connection.query(
+      'SELECT order_id, payment_status, payment_method, total_amount FROM orders WHERE order_id = ?',
+      [id]
+    );
+
+    if (orders.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy đơn hàng'
+      });
+    }
+
+    const order = orders[0];
+
+    // Chỉ cho phép cập nhật từ unpaid sang paid cho đơn COD
+    if (payment_status === 'paid' && order.payment_status === 'unpaid' && order.payment_method === 'cod') {
+      // Cập nhật payment_status
+      await connection.query(
+        'UPDATE orders SET payment_status = ? WHERE order_id = ?',
+        [payment_status, id]
+      );
+
+      await connection.commit();
+
+      res.json({
+        success: true,
+        message: 'Xác nhận thanh toán thành công. Doanh số đã được cập nhật.'
+      });
+    } else {
+      await connection.rollback();
+      return res.status(400).json({
+        success: false,
+        message: 'Chỉ có thể xác nhận thanh toán cho đơn COD chưa thanh toán'
+      });
+    }
+  } catch (error) {
+    await connection.rollback();
+    console.error('Update payment status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi cập nhật trạng thái thanh toán',
+      error: error.message
+    });
+  } finally {
+    connection.release();
+  }
+};
+
 // Thống kê trạng thái đơn hàng
 exports.getOrderStatusStats = async (req, res) => {
   try {

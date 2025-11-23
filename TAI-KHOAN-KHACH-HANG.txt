@@ -1,0 +1,47 @@
+========================================
+👥 TÀI KHOẢN KHÁCH HÀNG
+========================================
+
+Tài khoản 1:
+Email: client1@gmail.com
+Password: Test1234
+Role: customer
+User ID: 4
+
+========================================
+📝 LƯU Ý
+========================================
+
+✅ Tài khoản khách hàng có thể:
+   - Xem danh sách sách
+   - Xem chi tiết sách
+   - Thêm sách vào giỏ hàng
+   - Đặt hàng
+   - Xem lịch sử đơn hàng
+   - Cập nhật thông tin cá nhân
+
+❌ Tài khoản khách hàng KHÔNG thể:
+   - Truy cập trang admin
+   - Quản lý sách
+   - Quản lý đơn hàng
+   - Quản lý khách hàng
+   - Xem báo cáo
+
+========================================
+🚀 CÁCH SỬ DỤNG
+========================================
+
+1. Mở trình duyệt: http://localhost:3000
+2. Click "Đăng nhập"
+3. Nhập:
+   - Email: client1@gmail.com
+   - Password: Test1234
+4. Click "Đăng nhập"
+
+Sau khi đăng nhập, bạn sẽ thấy:
+- Trang chủ với danh sách sách
+- Menu: Trang chủ, Sách, Giỏ hàng, Đơn hàng, Hồ sơ
+- Không thấy menu Admin
+
+========================================
+

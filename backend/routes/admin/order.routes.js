@@ -18,6 +18,7 @@ router.get('/', adminOrderController.getAllOrders);
 router.get('/stats', adminOrderController.getOrderStatusStats);
 router.get('/:id', adminOrderController.getOrderDetail);
 router.patch('/:id/status', updateStatusValidation, handleValidationErrors, adminOrderController.updateOrderStatus);
+router.patch('/:id/payment', adminOrderController.updatePaymentStatus);
 
 module.exports = router;
 

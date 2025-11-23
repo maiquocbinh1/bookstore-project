@@ -12,8 +12,13 @@ const registerValidation = [
   body('password')
     .isLength({ min: 6 }).withMessage('Mật khẩu phải có ít nhất 6 ký tự')
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('Mật khẩu phải chứa chữ hoa, chữ thường và số'),
-  body('full_name').notEmpty().withMessage('Họ tên không được để trống'),
-  body('phone').optional().isMobilePhone('vi-VN').withMessage('Số điện thoại không hợp lệ')
+  body('full_name').notEmpty().trim().withMessage('Họ tên không được để trống'),
+  body('phone')
+    .optional({ nullable: true, checkFalsy: true })
+    .isLength({ min: 10, max: 11 })
+    .withMessage('Số điện thoại phải có 10-11 số')
+    .matches(/^[0-9]+$/)
+    .withMessage('Số điện thoại chỉ được chứa số')
 ];
 
 const loginValidation = [

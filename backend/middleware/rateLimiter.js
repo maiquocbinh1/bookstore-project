@@ -12,16 +12,24 @@ exports.apiLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Rate limiter nghiêm ngặt cho đăng nhập
-exports.loginLimiter = rateLimit({
+// Rate limiter cho đăng nhập (đã tắt trong development)
+const loginRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 phút
-  max: 5, // Giới hạn 5 requests
+  max: 100, // Giới hạn 100 requests (đã tăng từ 5)
   skipSuccessfulRequests: true, // Không đếm requests thành công
   message: {
     success: false,
     message: 'Quá nhiều lần đăng nhập thất bại, vui lòng thử lại sau 15 phút'
   }
 });
+
+// Middleware: Tắt rate limiting trong development
+exports.loginLimiter = (req, res, next) => {
+  if (process.env.NODE_ENV === 'development') {
+    return next(); // Bỏ qua rate limiting trong development
+  }
+  return loginRateLimit(req, res, next);
+};
 
 // Rate limiter cho đặt lại mật khẩu
 exports.passwordResetLimiter = rateLimit({
